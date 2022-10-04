@@ -24,7 +24,10 @@ Param(
 Set-StrictMode -Version Latest
 
 $projectDirectory = Split-Path $MyInvocation.MyCommand.Path
-$libgit2Directory = Join-Path $projectDirectory "libgit2"
+$libgit2Directory = (Join-Path $projectDirectory "libgit2") -replace '\\','/'
+$libssh2Directory = (Join-Path $projectDirectory "..\libssh2") -replace '\\','/'
+$libssh2Lib = (Join-Path $libssh2Directory "lib\libssh2.lib") -replace '\\','/'
+$libssh2IncludeDirectory = (Join-Path $libssh2Directory "libssh2\include") -replace '\\','/'
 $x86Directory = Join-Path $projectDirectory "nuget.package\runtimes\win-x86\native"
 $x64Directory = Join-Path $projectDirectory "nuget.package\runtimes\win-x64\native"
 $arm64Directory = Join-Path $projectDirectory "nuget.package\runtimes\win-arm64\native"
@@ -129,7 +132,7 @@ try {
         Write-Output "Building x64..."
         Run-Command -Quiet { & mkdir build64 }
         cd build64
-        Run-Command -Fatal { & $cmake -G "Visual Studio 16 2019" -A x64 -D BUILD_TESTS=OFF -D THREADSAFE=ON -D USE_SSH=OFF -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" ../.. }
+        Run-Command -Fatal { & $cmake -G "Visual Studio 16 2019" -A x64 -D BUILD_TESTS=OFF -D THREADSAFE=ON -D USE_SSH=ON -D "EMBED_SSH_PATH=$libssh2Directory" -D "LIBSSH2_LIBRARY=$libssh2Lib" -D "LIBSSH2_INCLUDE_DIR=$libssh2IncludeDirectory" -D ENABLE_TRACE=ON -D "BUILD_CLAR=$build_clar" -D "LIBGIT2_FILENAME=$binaryFilename" ../.. }
         Run-Command -Fatal { & $cmake --build . --config $configuration }
         if ($test.IsPresent) { Run-Command -Quiet -Fatal { & $ctest -V . } }
         cd $configuration
